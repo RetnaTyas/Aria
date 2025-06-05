@@ -13,6 +13,10 @@ Aria is a multimodal native MoE model. It features:
 - 3.9B activated parameters per token, enabling fast inference speed and low fine-tuning cost.
   
 
+## Philosophy
+
+Aria aims to be an open multimodal Mixture-of-Experts model that activates only 3.9B parameters per token, enabling fast inference. Our goal is to provide broad modality coverage while maintaining a fully open-source, modular design so developers can easily extend and build upon Aria.
+
 ## News
 - 2024.10.10: We release Aria!
 
@@ -85,6 +89,7 @@ We offer additional inference methods, such as utilizing [vLLM](https://github.c
 ### Cookbook
 Checkout these [inference examples](https://github.com/rhymes-ai/Aria/tree/main/inference/notebooks) that demonstrate how to use Aria on various applications such as chart understanding, PDF reading, video understanding, etc, available with both Hugging Face Transformers and [vLLM](https://github.com/vllm-project/vllm) backends.
 
+
 ## System Workflow
 
 Below is a high level view of how data moves through Aria's training and inference pipeline:
@@ -105,6 +110,23 @@ Dataset files (train.jsonl / test.jsonl) ──▶ `load_local_dataset` ──�
 ```
 
 The dataset format is described in [custom_dataset.md](docs/custom_dataset.md). `aria/data.py` loads each dataset directory containing `train.jsonl`/`test.jsonl` and image or video files. `mix_datasets` can combine multiple datasets according to the sampling weights defined in the configuration file. During training, `aria/train.py` invokes `mix_datasets`, processes the samples with `collate_fn`, and passes them to `SFTTrainer`. After training, the resulting model can be used for inference with `aria/inference.py` or via the vLLM backend as shown in [docs/inference.md](docs/inference.md).
+=======
+## Architecture
+
+Aria consists of three main building blocks:
+
+- **Vision encoder** ([aria/model/vision_encoder.py](aria/model/vision_encoder.py))
+- **Multi-modal projector** ([aria/model/projector.py](aria/model/projector.py))
+- **MoE language model** ([aria/model/moe_lm.py](aria/model/moe_lm.py))
+
+During inference an image is first processed by the vision encoder, producing patch-level embeddings and an attention mask. The projector converts these embeddings into a sequence of visual tokens, which are then concatenated with the textual prompt and fed into the MoE language model to generate the final response.
+
+```mermaid
+graph LR
+    A[Image] --> B(vision_encoder.py)
+    B --> C(projector.py)
+    C --> D(moe_lm.py)
+```
 
 ## Fine-tuning
 
@@ -184,6 +206,18 @@ deepspeed_config:
   zero3_init_flag: true
   zero_stage: 3
 ```
+
+### Configuration
+
+The YAML files in `recipes` control training behavior. Key options include:
+
+- `freeze_vit` – freeze the vision encoder weights ([`AriaModelConfig.freeze_vit`](aria/config.py#L37-L40)).
+- `freeze_llm` – freeze all language model layers or specify `freeze_llm_layers` for partial freezing ([`AriaModelConfig.freeze_llm`](aria/config.py#L45-L48)).
+- `max_image_size` – size of the image fed to the vision encoder, either `490` or `980` pixels ([`AriaModelConfig.max_image_size`](aria/config.py#L61-L67)).
+- `moe_z_loss_coeff` – coefficient for the router z-loss in MoE layers ([`AriaModelConfig.moe_z_loss_coeff`](aria/config.py#L53-L55)).
+- `moe_aux_loss_coeff` – coefficient for the auxiliary routing loss ([`AriaModelConfig.moe_aux_loss_coeff`](aria/config.py#L57-L59)).
+
+Modify these values in `recipes/config_lora.yaml` or `recipes/config_full.yaml` to match your dataset size and hardware. The LoRA config is a good starting point for single-GPU setups, while the full config exposes all parameters for larger runs.
 
 #### Inference with Your Trained Model
 
