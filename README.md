@@ -185,6 +185,18 @@ deepspeed_config:
   zero_stage: 3
 ```
 
+### Configuration
+
+The YAML files in `recipes` control training behavior. Key options include:
+
+- `freeze_vit` – freeze the vision encoder weights ([`AriaModelConfig.freeze_vit`](aria/config.py#L37-L40)).
+- `freeze_llm` – freeze all language model layers or specify `freeze_llm_layers` for partial freezing ([`AriaModelConfig.freeze_llm`](aria/config.py#L45-L48)).
+- `max_image_size` – size of the image fed to the vision encoder, either `490` or `980` pixels ([`AriaModelConfig.max_image_size`](aria/config.py#L61-L67)).
+- `moe_z_loss_coeff` – coefficient for the router z-loss in MoE layers ([`AriaModelConfig.moe_z_loss_coeff`](aria/config.py#L53-L55)).
+- `moe_aux_loss_coeff` – coefficient for the auxiliary routing loss ([`AriaModelConfig.moe_aux_loss_coeff`](aria/config.py#L57-L59)).
+
+Modify these values in `recipes/config_lora.yaml` or `recipes/config_full.yaml` to match your dataset size and hardware. The LoRA config is a good starting point for single-GPU setups, while the full config exposes all parameters for larger runs.
+
 #### Inference with Your Trained Model
 
 First, you need to extract the FP32 consolidated weights from ZeRO 1, 2, or 3 DeepSpeed checkpoints:
