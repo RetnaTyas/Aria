@@ -13,6 +13,10 @@ Aria is a multimodal native MoE model. It features:
 - 3.9B activated parameters per token, enabling fast inference speed and low fine-tuning cost.
   
 
+## Philosophy
+
+Aria aims to be an open multimodal Mixture-of-Experts model that activates only 3.9B parameters per token, enabling fast inference. Our goal is to provide broad modality coverage while maintaining a fully open-source, modular design so developers can easily extend and build upon Aria.
+
 ## News
 - 2024.10.10: We release Aria!
 
