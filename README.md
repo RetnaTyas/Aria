@@ -89,6 +89,28 @@ We offer additional inference methods, such as utilizing [vLLM](https://github.c
 ### Cookbook
 Checkout these [inference examples](https://github.com/rhymes-ai/Aria/tree/main/inference/notebooks) that demonstrate how to use Aria on various applications such as chart understanding, PDF reading, video understanding, etc, available with both Hugging Face Transformers and [vLLM](https://github.com/vllm-project/vllm) backends.
 
+
+## System Workflow
+
+Below is a high level view of how data moves through Aria's training and inference pipeline:
+
+```
+Dataset files (train.jsonl / test.jsonl) ──▶ `load_local_dataset` ──▶ `mix_datasets`
+      │
+      └── images or video frames
+                │
+                ▼
+           `collate_fn` (calls `apply_chat_template_and_tokenize` and `AriaVisionProcessor`)
+                │
+                ▼
+             `SFTTrainer` in `aria/train.py`
+                │
+                ▼
+        fine‑tuned model for use with `aria/inference.py` or vLLM
+```
+
+The dataset format is described in [custom_dataset.md](docs/custom_dataset.md). `aria/data.py` loads each dataset directory containing `train.jsonl`/`test.jsonl` and image or video files. `mix_datasets` can combine multiple datasets according to the sampling weights defined in the configuration file. During training, `aria/train.py` invokes `mix_datasets`, processes the samples with `collate_fn`, and passes them to `SFTTrainer`. After training, the resulting model can be used for inference with `aria/inference.py` or via the vLLM backend as shown in [docs/inference.md](docs/inference.md).
+=======
 ## Architecture
 
 Aria consists of three main building blocks:
