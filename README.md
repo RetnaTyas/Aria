@@ -89,6 +89,23 @@ We offer additional inference methods, such as utilizing [vLLM](https://github.c
 ### Cookbook
 Checkout these [inference examples](https://github.com/rhymes-ai/Aria/tree/main/inference/notebooks) that demonstrate how to use Aria on various applications such as chart understanding, PDF reading, video understanding, etc, available with both Hugging Face Transformers and [vLLM](https://github.com/vllm-project/vllm) backends.
 
+## Architecture
+
+Aria consists of three main building blocks:
+
+- **Vision encoder** ([aria/model/vision_encoder.py](aria/model/vision_encoder.py))
+- **Multi-modal projector** ([aria/model/projector.py](aria/model/projector.py))
+- **MoE language model** ([aria/model/moe_lm.py](aria/model/moe_lm.py))
+
+During inference an image is first processed by the vision encoder, producing patch-level embeddings and an attention mask. The projector converts these embeddings into a sequence of visual tokens, which are then concatenated with the textual prompt and fed into the MoE language model to generate the final response.
+
+```mermaid
+graph LR
+    A[Image] --> B(vision_encoder.py)
+    B --> C(projector.py)
+    C --> D(moe_lm.py)
+```
+
 ## Fine-tuning
 
 We offer both LoRA fine-tuning and full parameter tuning, using various dataset types:
